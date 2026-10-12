@@ -43,3 +43,100 @@ body {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(56, 189, 248, 0.15);
 }
+
+/* Tactical Leaflet Map Customizations */
+.leaflet-container {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  background-color: #040812 !important;
+  outline: none;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(11, 19, 43, 0.95) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(10px);
+}
+
+.leaflet-popup-tip {
+  background: rgba(11, 19, 43, 0.95) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  padding: 6px 8px !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #38bdf8 !important;
+}
+
+/* Custom Tactical Rotated Aircraft DivIcon */
+.tactical-aircraft-marker {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+@keyframes threat-pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.2; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.animate-threat-pulse {
+  animation: threat-pulse 2s infinite ease-in-out;
+}
+
+/* Realistic Radar Antenna Scanner Sweep */
+@keyframes radar-sweep {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 4s linear infinite;
+  transform-origin: 0 0;
+}
+
+/* FLIR / Night Vision Tactical Optical Filter */
+.flir-filter-layer {
+  filter: sepia(100%) hue-rotate(75deg) brightness(1.2) contrast(1.35) saturate(1.8) !important;
+}
+
+.satellite-enhanced-filter {
+  filter: contrast(1.1) brightness(1.02) saturate(1.15) !important;
+}
+
+/* Tactical Military Map Scale Bar */
+.leaflet-control-scale {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  margin-bottom: 38px !important;
+  margin-left: 16px !important;
+}
+
+.leaflet-control-scale-line {
+  background: rgba(6, 11, 21, 0.85) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.5) !important;
+  border-top: none !important;
+  color: #38bdf8 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  backdrop-filter: blur(8px) !important;
+  border-radius: 0 0 4px 4px !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6) !important;
+  letter-spacing: 0.05em;
+}
+
+/* Tactical Map Crosshair Center Watermark */
+.tactical-reticle {
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at center, transparent 38px, rgba(56, 189, 248, 0.04) 39px, transparent 40px),
+    linear-gradient(to right, transparent calc(50% - 0.5px), rgba(56, 189, 248, 0.08) calc(50% - 0.5px), rgba(56, 189, 248, 0.08) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), rgba(56, 189, 248, 0.08) calc(50% - 0.5px), rgba(56, 189, 248, 0.08) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+}
+
