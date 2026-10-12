@@ -274,3 +274,90 @@ def reset_demo(db: Session = Depends(get_db)):
         comments="Demonstration scenario and synthetic database reset to initial state."
     )
     return {"message": "Demonstration scenario successfully reset to baseline state."}
+
+
+# =========================================================================
+# TACTICAL AIR OPERATIONS & DYNAMIC RETASKING ENDPOINTS (SIH26250)
+# =========================================================================
+from app.services.tactical_sim import (
+    get_live_tactical_cop,
+    inject_tactical_crisis,
+    commit_tactical_retasking,
+    get_multi_source_fusion_status,
+    generate_ato_briefing,
+    THREAT_ZONES
+)
+
+@router.get("/tactical/cop")
+def get_tactical_cop(sim_time: float = Query(0.0, description="Simulation time in hours (0.0 to 4.0)")):
+    """Returns real-time 4D Common Operational Picture (COP) with aircraft, airbases, and threat zones."""
+    return get_live_tactical_cop(sim_time_hours=sim_time)
+
+@router.get("/tactical/threats")
+def list_threat_zones():
+    """Lists all active and standby contested threat envelopes."""
+    return THREAT_ZONES
+
+@router.post("/tactical/threats/{threat_id}/toggle")
+def toggle_threat_zone(threat_id: str, db: Session = Depends(get_db)):
+    """Toggles active state of a threat envelope (SAM, radar, jamming)."""
+    target = next((t for t in THREAT_ZONES if t["id"] == threat_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Threat zone not found")
+    target["is_active"] = not target["is_active"]
+    
+    log_audit_event(
+        db=db,
+        action=AuditAction.DISRUPTION_INJECTED,
+        actor_role="Tactical Officer",
+        actor_name="Threat Injection Panel",
+        related_entity_type="ThreatZone",
+        related_entity_id=threat_id,
+        details={"threat_name": target["name"], "is_active": target["is_active"]},
+        comments=f"Threat zone '{target['name']}' state toggled to {target['is_active']}."
+    )
+    return target
+
+@router.post("/tactical/inject-crisis")
+def inject_crisis(crisis_type: str = Query("SAM_RADAR_ACTIVATED"), db: Session = Depends(get_db)):
+    """Triggers in-flight disruption and produces immediate AI Retasking recommendation."""
+    plan = inject_tactical_crisis(crisis_type=crisis_type)
+    
+    log_audit_event(
+        db=db,
+        action=AuditAction.DISRUPTION_INJECTED,
+        actor_role="Tactical Simulator",
+        actor_name="Chaos Disruption Engine",
+        related_entity_type="FlightRetasking",
+        related_entity_id=plan.get("incident_id"),
+        details={"crisis_type": crisis_type, "urgency": plan.get("urgency")},
+        comments=f"Tactical crisis injected: {plan.get('crisis_summary')}"
+    )
+    return plan
+
+@router.post("/tactical/retask/commit")
+def commit_retask(approved: bool = Query(True), reviewer: str = Query("Commander Alpha"), db: Session = Depends(get_db)):
+    """Applies dynamic retasking plan to flight telemetry with commander approval."""
+    result = commit_tactical_retasking(approved=approved, reviewer=reviewer)
+    
+    log_audit_event(
+        db=db,
+        action=AuditAction.RETASKING_PROPOSED if not approved else AuditAction.RECOMMENDATION_APPROVED,
+        actor_role="Commander",
+        actor_name=reviewer,
+        related_entity_type="FlightRetasking",
+        details=result,
+        comments=result.get("message", "Retasking decision recorded.")
+    )
+    return result
+
+@router.get("/tactical/fusion")
+def get_sensor_fusion():
+    """Returns multi-source data fusion feed statuses and detected inconsistencies."""
+    return get_multi_source_fusion_status()
+
+@router.get("/tactical/ato/{mission_id}")
+def get_mission_ato(mission_id: str):
+    """Generates military-grade Air Tasking Order (ATO) Briefing Sheet."""
+    return generate_ato_briefing(mission_id=mission_id)
+

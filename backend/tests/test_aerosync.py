@@ -139,3 +139,42 @@ def test_reset_scenario():
     response = client.post("/api/reset")
     assert response.status_code == 200
     assert "reset" in response.json()["message"].lower()
+
+def test_tactical_endpoints():
+    # 1. Test COP
+    cop_resp = client.get("/api/tactical/cop?sim_time=1.5")
+    assert cop_resp.status_code == 200
+    cop = cop_resp.json()
+    assert len(cop["airbases"]) >= 5
+    assert len(cop["threat_zones"]) >= 3
+    assert len(cop["aircraft"]) >= 4
+
+    # 2. Test Threat List & Toggle
+    threats_resp = client.get("/api/tactical/threats")
+    assert threats_resp.status_code == 200
+    th_id = threats_resp.json()[0]["id"]
+    toggle_resp = client.post(f"/api/tactical/threats/{th_id}/toggle")
+    assert toggle_resp.status_code == 200
+
+    # 3. Test Crisis Injection & Retasking
+    crisis_resp = client.post("/api/tactical/inject-crisis?crisis_type=SAM_RADAR_ACTIVATED")
+    assert crisis_resp.status_code == 200
+    plan = crisis_resp.json()
+    assert plan["delta_metrics"]["threat_exposure_reduction_pct"] == 100.0
+    assert "survivability_score_after" in plan["delta_metrics"]
+
+    # 4. Commit Retask
+    commit_resp = client.post("/api/tactical/retask/commit?approved=true&reviewer=Air%20Marshal%20Singh")
+    assert commit_resp.status_code == 200
+    assert commit_resp.json()["status"] == "RETASKING_COMMITTED"
+
+    # 5. Test Sensor Fusion
+    fusion_resp = client.get("/api/tactical/fusion")
+    assert fusion_resp.status_code == 200
+    assert fusion_resp.json()["composite_integrity_pct"] > 90.0
+
+    # 6. Test ATO Briefing
+    ato_resp = client.get("/api/tactical/ato/REQ-2026-002")
+    assert ato_resp.status_code == 200
+    assert "GARUDA-01" in ato_resp.json()["mission_task"]["callsign"]
+

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { Overview } from './pages/Overview';
+import { TacticalCOP } from './pages/TacticalCOP';
 import { ResourceReadiness } from './pages/ResourceReadiness';
 import { PlanningWorkspace } from './pages/PlanningWorkspace';
 import { RecommendationReview } from './pages/RecommendationReview';
@@ -15,6 +16,7 @@ import type { DashboardSummary, Resource, MissionRequest, DataAlert } from './ty
 export const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const [currentRole, setCurrentRole] = useState<'Planner' | 'Reviewer'>('Planner');
+  const [isDaylightMode, setIsDaylightMode] = useState<boolean>(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [requests, setRequests] = useState<MissionRequest[]>([]);
@@ -48,21 +50,30 @@ export const AppContent: React.FC = () => {
   const pendingReviewCount = summary?.resources_requiring_review || 0;
 
   return (
-    <div className="min-h-screen bg-navy-950 text-slate-100 flex flex-col font-sans">
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
+      isDaylightMode ? 'bg-slate-100 text-slate-900' : 'bg-navy-950 text-slate-100'
+    }`}>
       <Navbar
         currentRole={currentRole}
         onRoleChange={setCurrentRole}
         onRefresh={loadAllData}
+        isDaylightMode={isDaylightMode}
+        onToggleDaylightMode={() => setIsDaylightMode(!isDaylightMode)}
       />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           alertCount={alerts.length}
           pendingReviewCount={pendingReviewCount}
+          isDaylightMode={isDaylightMode}
         />
 
         <main className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full">
           <Routes>
+            <Route
+              path="/tactical-cop"
+              element={<TacticalCOP isDaylightMode={isDaylightMode} />}
+            />
             <Route
               path="/"
               element={

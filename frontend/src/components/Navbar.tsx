@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, RefreshCw, RotateCcw, UserCheck } from 'lucide-react';
+import { Plane, RefreshCw, RotateCcw, UserCheck, Sun, Moon } from 'lucide-react';
 
 import { api } from '../services/api';
 
@@ -7,9 +7,17 @@ interface NavbarProps {
   currentRole: 'Planner' | 'Reviewer';
   onRoleChange: (role: 'Planner' | 'Reviewer') => void;
   onRefresh: () => void;
+  isDaylightMode?: boolean;
+  onToggleDaylightMode?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentRole, onRoleChange, onRefresh }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  currentRole,
+  onRoleChange,
+  onRefresh,
+  isDaylightMode = false,
+  onToggleDaylightMode,
+}) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [isResetting, setIsResetting] = useState(false);
 
@@ -39,7 +47,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRole, onRoleChange, onRef
   };
 
   return (
-    <header className="h-16 bg-navy-900 border-b border-navy-700/60 px-6 flex items-center justify-between sticky top-0 z-40">
+    <header className={`h-16 px-6 flex items-center justify-between sticky top-0 z-40 transition-colors border-b ${
+      isDaylightMode
+        ? 'bg-slate-100 border-slate-300 text-slate-800'
+        : 'bg-navy-900 border-navy-700/60 text-white'
+    }`}>
       {/* Brand & Subtitle */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
@@ -47,9 +59,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRole, onRoleChange, onRef
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold tracking-tight text-white">AeroSync AI</h1>
+            <h1 className={`text-lg font-bold tracking-tight ${isDaylightMode ? 'text-slate-900' : 'text-white'}`}>
+              AERONEX AI
+            </h1>
             <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-700/50">
-              NON-COMBAT DEMONSTRATOR
+              SIH26250 TACTICAL COP
             </span>
           </div>
           <p className="text-xs text-slate-400">Intelligent Air Operations Decision Support System</p>
@@ -57,7 +71,25 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRole, onRoleChange, onRef
       </div>
 
       {/* Clock & Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* Daylight / Midnight Mode Switch */}
+        {onToggleDaylightMode && (
+          <button
+            onClick={onToggleDaylightMode}
+            className={`p-2 rounded-lg border text-xs font-mono flex items-center gap-1.5 transition-colors ${
+              isDaylightMode
+                ? 'bg-white border-slate-300 text-amber-600 hover:bg-slate-50'
+                : 'bg-navy-950 border-slate-700 text-cyan-400 hover:bg-navy-800'
+            }`}
+            title={isDaylightMode ? 'Switch to Tactical Midnight' : 'Switch to Daylight Command'}
+          >
+            {isDaylightMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span className="hidden md:inline font-semibold">
+              {isDaylightMode ? 'Daylight' : 'Midnight'}
+            </span>
+          </button>
+        )}
+
         {/* System Time */}
         <div className="hidden md:flex items-center gap-2 text-xs font-mono bg-navy-950 px-3 py-1.5 rounded-md border border-navy-700 text-slate-300">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -94,9 +126,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRole, onRoleChange, onRef
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-rose-950/60 text-rose-300 border border-rose-800/80 hover:bg-rose-900/80 transition-colors"
         >
           <RotateCcw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
-          <span>Reset Demo</span>
+          <span className="hidden sm:inline">Reset Demo</span>
         </button>
       </div>
     </header>
   );
 };
+

@@ -75,4 +75,32 @@ export const api = {
     }),
 
   resetDemo: () => fetchJson<{ message: string }>('/reset', { method: 'POST' }),
+
+  // Tactical Operations & Dynamic Retasking (SIH26250)
+  getTacticalCOP: (simTime: number = 0.0) =>
+    fetchJson<import('../types').TacticalCOPResponse>(`/tactical/cop?sim_time=${simTime}`),
+
+  getThreats: () =>
+    fetchJson<import('../types').ThreatZone[]>('/tactical/threats'),
+
+  toggleThreat: (threatId: string) =>
+    fetchJson<import('../types').ThreatZone>(`/tactical/threats/${threatId}/toggle`, { method: 'POST' }),
+
+  injectCrisis: (crisisType: string = 'SAM_RADAR_ACTIVATED') =>
+    fetchJson<import('../types').RetaskingPlan>(`/tactical/inject-crisis?crisis_type=${encodeURIComponent(crisisType)}`, {
+      method: 'POST',
+    }),
+
+  commitRetasking: (approved: boolean = true, reviewer: string = 'Commander Alpha') =>
+    fetchJson<{ status: string; message: string; aircraft_id?: string; timestamp: string }>(
+      `/tactical/retask/commit?approved=${approved}&reviewer=${encodeURIComponent(reviewer)}`,
+      { method: 'POST' }
+    ),
+
+  getSensorFusion: () =>
+    fetchJson<import('../types').FusionResponse>('/tactical/fusion'),
+
+  getMissionATO: (missionId: string) =>
+    fetchJson<import('../types').ATOBriefingResponse>(`/tactical/ato/${encodeURIComponent(missionId)}`),
 };
+
