@@ -4,18 +4,19 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { Overview } from './pages/Overview';
 import { TacticalCOP } from './pages/TacticalCOP';
+import { PredictiveAnalytics } from './pages/PredictiveAnalytics';
 import { ResourceReadiness } from './pages/ResourceReadiness';
 import { PlanningWorkspace } from './pages/PlanningWorkspace';
 import { RecommendationReview } from './pages/RecommendationReview';
 import { AlertsDataQuality } from './pages/AlertsDataQuality';
 import { AuditHistory } from './pages/AuditHistory';
 import { api } from './services/api';
-import type { DashboardSummary, Resource, MissionRequest, DataAlert } from './types';
+import type { DashboardSummary, Resource, MissionRequest, DataAlert, MilitaryRole } from './types';
 
 
 export const AppContent: React.FC = () => {
   const navigate = useNavigate();
-  const [currentRole, setCurrentRole] = useState<'Planner' | 'Reviewer'>('Planner');
+  const [currentRole, setCurrentRole] = useState<MilitaryRole>('Commander');
   const [isDaylightMode, setIsDaylightMode] = useState<boolean>(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
@@ -72,7 +73,11 @@ export const AppContent: React.FC = () => {
           <Routes>
             <Route
               path="/tactical-cop"
-              element={<TacticalCOP isDaylightMode={isDaylightMode} />}
+              element={<TacticalCOP isDaylightMode={isDaylightMode} currentRole={currentRole} />}
+            />
+            <Route
+              path="/predictive"
+              element={<PredictiveAnalytics />}
             />
             <Route
               path="/"

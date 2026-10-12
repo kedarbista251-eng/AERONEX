@@ -6,6 +6,25 @@ export type RequestStatus = 'UNASSIGNED' | 'PENDING_REVIEW' | 'SCHEDULED' | 'CON
 export type RecommendationStatus = 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
 export type AuditAction = 'DATA_IMPORT' | 'SCENARIO_EVALUATION' | 'RECOMMENDATION_APPROVED' | 'RECOMMENDATION_REJECTED' | 'DATA_QUALITY_ALERT' | 'SCENARIO_RESET';
 
+// Military Role-Based Personas (C2 Chain of Command)
+export type MilitaryRole = 'Commander' | 'Planner' | 'Pilot' | 'Engineer';
+
+export interface MilitaryPersona {
+  id: MilitaryRole;
+  name: string;
+  rank: string;
+  callsign: string;
+  roleTitle: string;
+  clearance: string;
+  unit: string;
+  avatarBg: string;
+  authorityLevel: string;
+  primaryMission: string;
+  activeDatalink: string;
+  keyResponsibilities: string[];
+  unreadDispatches: number;
+}
+
 export interface Resource {
   id: string;
   name: string;
@@ -131,7 +150,7 @@ export interface DashboardSummary {
   request_status_breakdown: Record<string, number>;
 }
 
-// Tactical Air Operations & Dynamic Retasking Types (SIH26250)
+// Tactical Air Operations & Dynamic Retasking Types
 export interface Airbase {
   id: string;
   name: string;
@@ -324,4 +343,112 @@ export interface ATOBriefingResponse {
   special_instructions_spins: string[];
   authorized_by: string;
 }
+
+export interface WaypointAnalysis {
+  waypoint_name: string;
+  distance_km: number;
+  altitude_ft: number;
+  survivability_pct: number;
+  threat_exposure_score: number;
+  active_threats: Array<{
+    threat_id: string;
+    threat_name: string;
+    threat_type: string;
+    distance_km: number;
+    kill_probability: number;
+  }>;
+}
+
+export interface PredictiveSurvivabilityResponse {
+  overall_survivability_pct: number;
+  risk_classification: string;
+  countermeasures_active: boolean;
+  stealth_profile: boolean;
+  total_route_distance_km: number;
+  waypoints_analysis: WaypointAnalysis[];
+}
+
+export interface FuelProfilePoint {
+  elapsed_hours: number;
+  distance_km: number;
+  projected_fuel_pct: number;
+  is_below_bingo: boolean;
+  is_below_emergency: boolean;
+}
+
+export interface PredictiveFuelResponse {
+  flight_time_hours: number;
+  flight_time_minutes: number;
+  initial_fuel_pct: number;
+  projected_end_fuel_pct: number;
+  bingo_threshold_pct: number;
+  combat_reserve_pct: number;
+  bingo_reached_km: number | null;
+  is_mission_feasible: boolean;
+  divert_fuel_margin_pct: number;
+  profile_points: FuelProfilePoint[];
+}
+
+export interface PredictiveReliabilityResponse {
+  effective_mtbf_hours: number;
+  readiness_rating: string;
+  environmental_stress: string;
+  failure_risk_forecast: {
+    within_30_flight_hours_pct: number;
+    within_60_flight_hours_pct: number;
+    within_90_flight_hours_pct: number;
+  };
+  subsystem_health_scores: {
+    propulsion_turbines: number;
+    avionics_radar_bus: number;
+    hydraulics_actuators: number;
+    airframe_structural_integrity: number;
+  };
+  recommended_action: string;
+}
+
+export interface WeatherHourlyProjection {
+  forecast_hour_offset: number;
+  zulu_time: string;
+  projected_wind_kts: number;
+  projected_visibility_km: number;
+  storm_probability_pct: number;
+  flight_category: string;
+}
+
+export interface PredictiveWeatherHorizonResponse {
+  region: string;
+  primary_trend: string;
+  forecast_horizon_hours: number;
+  hourly_projections: WeatherHourlyProjection[];
+  operational_clearance: string;
+}
+
+export interface FleetPredictiveSummary {
+  total_airframes_monitored: number;
+  fleet_average_health_score: number;
+  surge_ready_airframes: number;
+  surge_capacity_pct: number;
+  fleet_operational_tempo: string;
+  airframe_reliability_profiles: Array<{
+    resource_id: string;
+    name: string;
+    type: string;
+    base: string;
+    health_score: number;
+    mtbf_hours: number;
+    failure_risk_30h_pct: number;
+    readiness_rating: string;
+  }>;
+  sector_weather_horizons: PredictiveWeatherHorizonResponse[];
+}
+
+export interface WhatIfSimResponse {
+  simulation_id: string;
+  survivability: PredictiveSurvivabilityResponse;
+  fuel_profile: PredictiveFuelResponse;
+  reliability: PredictiveReliabilityResponse;
+  composite_feasibility_score: number;
+}
+
 

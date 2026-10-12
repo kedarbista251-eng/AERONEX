@@ -277,7 +277,7 @@ def reset_demo(db: Session = Depends(get_db)):
 
 
 # =========================================================================
-# TACTICAL AIR OPERATIONS & DYNAMIC RETASKING ENDPOINTS (SIH26250)
+# TACTICAL AIR OPERATIONS & DYNAMIC RETASKING ENDPOINTS
 # =========================================================================
 from app.services.tactical_sim import (
     get_live_tactical_cop,
@@ -360,4 +360,121 @@ def get_sensor_fusion():
 def get_mission_ato(mission_id: str):
     """Generates military-grade Air Tasking Order (ATO) Briefing Sheet."""
     return generate_ato_briefing(mission_id=mission_id)
+
+
+# =========================================================================
+# PREDICTIVE ANALYTICS & RELIABILITY ENDPOINTS
+# =========================================================================
+from app.services.predictive import (
+    calculate_predictive_survivability,
+    calculate_predictive_fuel_profile,
+    calculate_predictive_reliability,
+    calculate_predictive_weather_window,
+    get_fleet_wide_predictive_summary,
+)
+
+@router.get("/predictive/fleet-readiness")
+def get_fleet_predictive_readiness(db: Session = Depends(get_db)):
+    """Provides fleet-wide predictive reliability, surge capacity, and weather horizon forecast."""
+    return get_fleet_wide_predictive_summary(db)
+
+@router.get("/predictive/survivability")
+def get_mission_survivability(
+    aircraft_type: str = Query("CARGO_TRANSPORT"),
+    countermeasures: bool = Query(True),
+    stealth: bool = Query(False)
+):
+    """Computes waypoint-by-waypoint predictive survivability P_surv(t) against active threat envelopes."""
+    sample_waypoints = [
+        {"name": "BASE-ALPHA", "lat": 28.6139, "lng": 77.2090, "alt_ft": 1000},
+        {"name": "WP-BRAVO (Border Sector)", "lat": 27.9500, "lng": 76.6000, "alt_ft": 24000},
+        {"name": "WP-CHARLIE (Contested)", "lat": 27.3500, "lng": 76.1000, "alt_ft": 24000},
+        {"name": "WP-DELTA (Near SAM)", "lat": 26.9124, "lng": 75.7873, "alt_ft": 15000},
+        {"name": "BASE-BETA (Target FOB)", "lat": 26.9124, "lng": 75.7873, "alt_ft": 1500},
+    ]
+    return calculate_predictive_survivability(
+        aircraft_type=aircraft_type,
+        waypoints=sample_waypoints,
+        countermeasures=countermeasures,
+        low_observable=stealth
+    )
+
+@router.get("/predictive/fuel-profile")
+def get_fuel_profile(
+    initial_fuel: float = Query(85.0),
+    burn_rate_kgh: float = Query(2100.0),
+    speed_kts: float = Query(330.0),
+    distance_km: float = Query(750.0),
+    reserve_pct: float = Query(15.0),
+    bingo_pct: float = Query(25.0)
+):
+    """Calculates dynamic fuel exhaustion profile, bingo fuel point, and divert airfield margin."""
+    return calculate_predictive_fuel_profile(
+        initial_fuel_pct=initial_fuel,
+        burn_rate_kgh=burn_rate_kgh,
+        cruise_speed_kts=speed_kts,
+        distance_km=distance_km,
+        combat_reserve_pct=reserve_pct,
+        bingo_threshold_pct=bingo_pct
+    )
+
+@router.get("/predictive/weather-horizon")
+def get_weather_horizon(
+    region: str = Query("Sector-Alpha Airbase"),
+    horizon_hours: int = Query(6)
+):
+    """Projects 6-hour meteorological degradation forecast at target tactical airbase."""
+    return calculate_predictive_weather_window(region=region, horizon_hours=horizon_hours)
+
+@router.post("/predictive/what-if-simulation")
+def run_what_if_predictive(payload: dict, db: Session = Depends(get_db)):
+    """Runs combined predictive simulation evaluating survivability, fuel, and component stress."""
+    ac_type = payload.get("aircraft_type", "CARGO_TRANSPORT")
+    distance = float(payload.get("distance_km", 650.0))
+    initial_fuel = float(payload.get("initial_fuel_pct", 85.0))
+    countermeasures = bool(payload.get("countermeasures", True))
+    stealth = bool(payload.get("stealth", False))
+    stress = payload.get("environment_stress", "NORMAL")
+
+    surv = calculate_predictive_survivability(
+        aircraft_type=ac_type,
+        waypoints=[
+            {"name": "BASE-ALPHA", "lat": 28.6139, "lng": 77.2090, "alt_ft": 1000},
+            {"name": "CONTESTED-ENTRY", "lat": 27.5000, "lng": 76.5000, "alt_ft": 24000},
+            {"name": "INGRESS-CORRIDOR", "lat": 26.9000, "lng": 75.8000, "alt_ft": 18000},
+            {"name": "TARGET-FOB", "lat": 26.5000, "lng": 75.2000, "alt_ft": 2000},
+        ],
+        countermeasures=countermeasures,
+        low_observable=stealth
+    )
+
+    fuel = calculate_predictive_fuel_profile(
+        initial_fuel_pct=initial_fuel,
+        burn_rate_kgh=1900.0,
+        cruise_speed_kts=310.0,
+        distance_km=distance,
+        combat_reserve_pct=15.0,
+        bingo_threshold_pct=25.0
+    )
+
+    rel = calculate_predictive_reliability(
+        health_score=92.0,
+        flight_hours=140.0,
+        airframe_type=ac_type,
+        environment_stress=stress
+    )
+
+    return {
+        "simulation_id": f"SIM-{datetime.now(timezone.utc).strftime('%H%M%S')}",
+        "survivability": surv,
+        "fuel_profile": fuel,
+        "reliability": rel,
+        "composite_feasibility_score": round(
+            (surv["overall_survivability_pct"] * 0.45) +
+            (min(100.0, fuel["divert_fuel_margin_pct"] * 3.0) * 0.30) +
+            (rel["subsystem_health_scores"]["propulsion_turbines"] * 0.25),
+            1
+        )
+    }
+
 

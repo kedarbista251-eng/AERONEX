@@ -1,5 +1,5 @@
 """
-Tactical Air Operations Simulation & Dynamic Retasking Engine for SIH26250.
+Tactical Air Operations Simulation & Dynamic Retasking Engine.
 Provides:
 - Geospatial Airbase and Waypoint coordinates
 - Contested Threat Envelopes (SAM batteries, Radar domes, EW jamming, Weather hazards)
@@ -613,47 +613,43 @@ def commit_tactical_retasking(approved: bool = True, reviewer: str = "Commander 
 
 def get_multi_source_fusion_status() -> Dict[str, Any]:
     """
-    Monitors all 5 ingested intelligence streams and detects sensor spoofing/inconsistencies.
+    Monitors all 7 disparate defense intelligence streams:
+    1. Aircraft Availability
+    2. Crew Status & Fatigue
+    3. Weapon Loads & Armament Inventory
+    4. Airspace & NOTAM Geofences
+    5. Weather & Environmental Hazards
+    6. Contested Threats & Radar Emitters
+    7. Mission Priorities & C2 Operational Tasking
     """
     now = datetime.now(timezone.utc)
     streams = [
         {
-            "id": "STREAM-RADAR-ADSB",
-            "name": "Link-16 Tactical Data Link & ADS-B Ground Radar",
-            "provider": "Air Defence Ground Environment System (ADGES)",
+            "id": "STREAM-AVAIL-HUMS",
+            "name": "1. Aircraft Availability & Hangar Turnaround",
+            "provider": "Health & Usage Monitoring System (HUMS / FMAD)",
+            "status": "STALE_WARNING",
+            "latency_ms": 1850,
+            "sync_rate_hz": 0.1,
+            "integrity_score": 91.2,
+            "records_per_min": 18,
+            "last_packet": (now - timedelta(minutes=4)).isoformat(),
+        },
+        {
+            "id": "STREAM-CREW-FRMS",
+            "name": "2. Crew Readiness & Flight Duty Fatigue Limits",
+            "provider": "Aircrew Rostering & FRMS Roster Database",
             "status": "OPTIMAL",
-            "latency_ms": 38,
-            "sync_rate_hz": 10.0,
-            "integrity_score": 99.8,
-            "records_per_min": 1420,
-            "last_packet": now.isoformat(),
+            "latency_ms": 75,
+            "sync_rate_hz": 1.0,
+            "integrity_score": 99.5,
+            "records_per_min": 85,
+            "last_packet": (now - timedelta(seconds=1)).isoformat(),
         },
         {
-            "id": "STREAM-MET-DOPPLER",
-            "name": "Doppler Weather Radar & Satellite Reflectivity",
-            "provider": "Military Meteorological Network (MMN)",
-            "status": "OPTIMAL",
-            "latency_ms": 120,
-            "sync_rate_hz": 0.5,
-            "integrity_score": 97.4,
-            "records_per_min": 60,
-            "last_packet": (now - timedelta(seconds=12)).isoformat(),
-        },
-        {
-            "id": "STREAM-EW-SIGINT",
-            "name": "Tactical ELINT / SIGINT Threat Intelligence",
-            "provider": "Electronic Support Measures (ESM) Overwatch",
-            "status": "HIGH_ALERT",
-            "latency_ms": 65,
-            "sync_rate_hz": 2.0,
-            "integrity_score": 98.9,
-            "records_per_min": 310,
-            "last_packet": (now - timedelta(seconds=2)).isoformat(),
-        },
-        {
-            "id": "STREAM-ARMORY-DEPOT",
-            "name": "Armament & Munitions Logistics Inventory",
-            "provider": "Air Force Central Armaments Depot (AFCAD)",
+            "id": "STREAM-WEAPONS-DEPOT",
+            "name": "3. Weapon Loads & Armament Stores Inventory",
+            "provider": "Central Armaments & Munitions Depot (AFCAD)",
             "status": "OPTIMAL",
             "latency_ms": 240,
             "sync_rate_hz": 0.2,
@@ -662,17 +658,51 @@ def get_multi_source_fusion_status() -> Dict[str, Any]:
             "last_packet": (now - timedelta(seconds=45)).isoformat(),
         },
         {
-            "id": "STREAM-MAINT-HUMS",
-            "name": "Health & Usage Monitoring System (HUMS Telemetry)",
-            "provider": "Fleet Maintenance Automated Diagnostics (FMAD)",
-            "status": "STALE_WARNING",
-            "latency_ms": 1850,
-            "sync_rate_hz": 0.1,
-            "integrity_score": 91.2,
-            "records_per_min": 18,
-            "last_packet": (now - timedelta(minutes=4)).isoformat(),
+            "id": "STREAM-AIRSPACE-NOTAM",
+            "name": "4. Airspace Corridors & Active NOTAM Restrictions",
+            "provider": "Area Control Center (ACC) & Military NOTAM Grid",
+            "status": "OPTIMAL",
+            "latency_ms": 90,
+            "sync_rate_hz": 1.0,
+            "integrity_score": 98.7,
+            "records_per_min": 110,
+            "last_packet": (now - timedelta(seconds=5)).isoformat(),
+        },
+        {
+            "id": "STREAM-MET-DOPPLER",
+            "name": "5. Hyperlocal Weather & Doppler Storm Radar",
+            "provider": "Military Meteorological Network (MMN / IMD)",
+            "status": "OPTIMAL",
+            "latency_ms": 120,
+            "sync_rate_hz": 0.5,
+            "integrity_score": 97.4,
+            "records_per_min": 60,
+            "last_packet": (now - timedelta(seconds=12)).isoformat(),
+        },
+        {
+            "id": "STREAM-THREATS-ELINT",
+            "name": "6. Contested Threats & SAM Radar Envelopes",
+            "provider": "Electronic Support Measures (ESM) Overwatch Grid",
+            "status": "HIGH_ALERT",
+            "latency_ms": 65,
+            "sync_rate_hz": 2.0,
+            "integrity_score": 98.9,
+            "records_per_min": 310,
+            "last_packet": (now - timedelta(seconds=2)).isoformat(),
+        },
+        {
+            "id": "STREAM-PRIORITY-C2",
+            "name": "7. Mission Priorities & Joint Air Operations C2",
+            "provider": "Air Operations Directorate Battle Management (AOD-C2)",
+            "status": "OPTIMAL",
+            "latency_ms": 42,
+            "sync_rate_hz": 5.0,
+            "integrity_score": 99.9,
+            "records_per_min": 540,
+            "last_packet": now.isoformat(),
         },
     ]
+
 
     # Inconsistency checks
     inconsistencies = [

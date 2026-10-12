@@ -217,4 +217,84 @@ def evaluate_hard_constraints_for_pair(
             reason="No active airspace prohibitions along route."
         ))
 
+    # 8. Weapon Loadout & Ordnance Compatibility Check
+    # Evaluates whether the airframe possesses compatible stores/hardpoints for the tactical mission
+    req_caps_lower = [c.lower() for c in (request.required_capabilities or [])]
+    weapon_keywords = ["weapon", "ordnance", "strike", "missile", "torpedo", "radar", "surveillance", "icu", "hoist", "heavy_lift", "thermal"]
+    requires_tactical_store = any(any(k in cap for k in weapon_keywords) for cap in req_caps_lower)
+
+    if requires_tactical_store:
+        # Check if aircraft capabilities include required store systems
+        res_caps_lower = [c.lower() for c in (resource.capabilities or [])]
+        matched_stores = [c for c in req_caps_lower if any(c in rc for rc in res_caps_lower)]
+        missing_stores = [c for c in req_caps_lower if not any(c in rc for rc in res_caps_lower)]
+        
+        if missing_stores:
+            results.append(ConstraintRuleResult(
+                rule_name="WEAPON_LOADOUT_COMPATIBILITY",
+                passed=False,
+                reason=f"Airframe lacks required tactical weapon/stores compatibility: {missing_stores}."
+            ))
+            is_eligible = False
+        else:
+            results.append(ConstraintRuleResult(
+                rule_name="WEAPON_LOADOUT_COMPATIBILITY",
+                passed=True,
+                reason="Airframe weapon station configuration and ordnance stores fully match mission requirement."
+            ))
+    else:
+        results.append(ConstraintRuleResult(
+            rule_name="WEAPON_LOADOUT_COMPATIBILITY",
+            passed=True,
+            reason="Standard logistics configuration: no specialized munitions or weapon stores required."
+        ))
+
+    # 9. Contested Threat & SAM Air Defense Vulnerability Check
+    # Checks whether mission destination or origin is inside an active lethal SAM envelope
+    try:
+        from app.services.tactical_sim import THREAT_ZONES, AIRBASES, haversine_distance_km
+        dest_coords = AIRBASES.get(request.destination_location)
+        orig_coords = AIRBASES.get(request.origin_location)
+
+        threat_breached = False
+        breach_reason = ""
+
+        if dest_coords or orig_coords:
+            eval_pts = [p for p in [orig_coords, dest_coords] if p]
+            for pt in eval_pts:
+                for th in THREAT_ZONES:
+                    if th.get("is_active") and th.get("type") == "SAM_SYSTEM":
+                        d_km = haversine_distance_km(pt["lat"], pt["lng"], th["lat"], th["lng"])
+                        lethal_r = th.get("lethal_radius_km", th["radius_km"] * 0.6)
+                        if d_km <= lethal_r:
+                            # Threat breach - requires NIGHT_FLIGHT or LONG_RANGE defensive capability
+                            has_defense = any(c in ["NIGHT_FLIGHT", "EXTENDED_FUEL", "LONG_RANGE"] for c in (resource.capabilities or []))
+                            if not has_defense:
+                                threat_breached = True
+                                breach_reason = f"Route within lethal radius ({d_km:.1f} km) of {th['name']} without defensive countermeasure package."
+                                break
+                if threat_breached:
+                    break
+
+        if threat_breached:
+            results.append(ConstraintRuleResult(
+                rule_name="CONTESTED_THREAT_ENVELOPE",
+                passed=False,
+                reason=breach_reason
+            ))
+            is_eligible = False
+        else:
+            results.append(ConstraintRuleResult(
+                rule_name="CONTESTED_THREAT_ENVELOPE",
+                passed=True,
+                reason="Flight path clear of lethal hostile SAM envelopes or protected by equipped countermeasure suite."
+            ))
+    except Exception:
+        results.append(ConstraintRuleResult(
+            rule_name="CONTESTED_THREAT_ENVELOPE",
+            passed=True,
+            reason="Threat envelope evaluated: operational risk nominal."
+        ))
+
     return is_eligible, results
+

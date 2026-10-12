@@ -178,3 +178,64 @@ def test_tactical_endpoints():
     assert ato_resp.status_code == 200
     assert "GARUDA-01" in ato_resp.json()["mission_task"]["callsign"]
 
+
+def test_weapon_and_threat_constraint_rules():
+    db = TestingSessionLocal()
+    res = db.query(Resource).filter(Resource.id == "RES-C130-01").first()
+    req = db.query(MissionRequest).filter(MissionRequest.id == "REQ-2026-002").first()
+
+    is_eligible, rules = evaluate_hard_constraints_for_pair(res, req, db)
+    db.close()
+
+    rule_names = [r.rule_name for r in rules]
+    assert "WEAPON_LOADOUT_COMPATIBILITY" in rule_names
+    assert "CONTESTED_THREAT_ENVELOPE" in rule_names
+
+    weapon_rule = next(r for r in rules if r.rule_name == "WEAPON_LOADOUT_COMPATIBILITY")
+    assert weapon_rule.passed is True
+
+
+def test_predictive_analytics_endpoints():
+    # 1. Fleet Readiness
+    fleet_resp = client.get("/api/predictive/fleet-readiness")
+    assert fleet_resp.status_code == 200
+    fleet_data = fleet_resp.json()
+    assert fleet_data["total_airframes_monitored"] >= 20
+    assert "surge_capacity_pct" in fleet_data
+    assert len(fleet_data["sector_weather_horizons"]) >= 4
+
+    # 2. Survivability Curve
+    surv_resp = client.get("/api/predictive/survivability?countermeasures=true&stealth=false")
+    assert surv_resp.status_code == 200
+    surv_data = surv_resp.json()
+    assert "overall_survivability_pct" in surv_data
+    assert len(surv_data["waypoints_analysis"]) >= 4
+
+    # 3. Dynamic Fuel Profile
+    fuel_resp = client.get("/api/predictive/fuel-profile?initial_fuel=90&burn_rate_kgh=2000&distance_km=600")
+    assert fuel_resp.status_code == 200
+    fuel_data = fuel_resp.json()
+    assert fuel_data["is_mission_feasible"] is True
+    assert len(fuel_data["profile_points"]) >= 8
+
+    # 4. Weather Horizon
+    wx_resp = client.get("/api/predictive/weather-horizon?region=Sector-Alpha%20Airbase")
+    assert wx_resp.status_code == 200
+    wx_data = wx_resp.json()
+    assert len(wx_data["hourly_projections"]) == 7
+
+    # 5. What-If Simulation
+    sim_resp = client.post("/api/predictive/what-if-simulation", json={
+        "aircraft_type": "CARGO_TRANSPORT",
+        "distance_km": 500,
+        "initial_fuel_pct": 80,
+        "countermeasures": True,
+        "stealth": False,
+        "environment_stress": "NORMAL"
+    })
+    assert sim_resp.status_code == 200
+    sim_data = sim_resp.json()
+    assert "composite_feasibility_score" in sim_data
+    assert sim_data["composite_feasibility_score"] > 50
+
+

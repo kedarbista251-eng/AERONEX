@@ -8,16 +8,18 @@ import { TimelineScrubber } from '../components/TimelineScrubber';
 import { CrisisDisruptionModal } from '../components/CrisisDisruptionModal';
 import { SensorFusionHub } from '../components/SensorFusionHub';
 import { ATOBriefingModal } from '../components/ATOBriefingModal';
+import { CockpitDatalinkHUD } from '../components/CockpitDatalinkHUD';
 import { api } from '../services/api';
 import type {
-  TacticalCOPResponse, RetaskingPlan, FusionResponse, ATOBriefingResponse
+  TacticalCOPResponse, RetaskingPlan, FusionResponse, ATOBriefingResponse, MilitaryRole
 } from '../types';
 
 interface TacticalCOPProps {
   isDaylightMode?: boolean;
+  currentRole?: MilitaryRole;
 }
 
-export const TacticalCOP: React.FC<TacticalCOPProps> = ({ isDaylightMode = false }) => {
+export const TacticalCOP: React.FC<TacticalCOPProps> = ({ isDaylightMode = false, currentRole = 'Commander' }) => {
   const [copData, setCopData] = useState<TacticalCOPResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [simTime, setSimTime] = useState<number>(0.0);
@@ -29,6 +31,7 @@ export const TacticalCOP: React.FC<TacticalCOPProps> = ({ isDaylightMode = false
   const [isCrisisModalOpen, setIsCrisisModalOpen] = useState<boolean>(false);
   const [isFusionPanelOpen, setIsFusionPanelOpen] = useState<boolean>(false);
   const [isATOModalOpen, setIsATOModalOpen] = useState<boolean>(false);
+  const [showCockpitHUD, setShowCockpitHUD] = useState<boolean>(false);
 
   const [retaskingPlan, setRetaskingPlan] = useState<RetaskingPlan | null>(null);
   const [fusionData, setFusionData] = useState<FusionResponse | null>(null);
@@ -120,8 +123,8 @@ export const TacticalCOP: React.FC<TacticalCOPProps> = ({ isDaylightMode = false
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold tracking-tight">4D TACTICAL AIR OPERATIONS (COP)</h2>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">
-                SIH26250
+              <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">
+                REAL-TIME C2
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 font-bold flex items-center gap-1">
                 <ShieldAlert className="w-3 h-3 inline" />
@@ -170,6 +173,20 @@ export const TacticalCOP: React.FC<TacticalCOPProps> = ({ isDaylightMode = false
             <span>MISSION ATO</span>
           </button>
 
+          {/* Pilot Link-16 Cockpit HUD Toggle */}
+          <button
+            onClick={() => setShowCockpitHUD(!showCockpitHUD)}
+            className={`px-3.5 py-2 rounded-lg border text-xs font-bold font-mono flex items-center gap-2 transition-all ${
+              currentRole === 'Pilot' || showCockpitHUD
+                ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-md shadow-emerald-950/50'
+                : 'bg-navy-950 text-slate-400 border-slate-700 hover:text-emerald-400 hover:border-slate-600'
+            }`}
+            title="Inspect how Flight Lead receives in-flight retasking orders via Link-16"
+          >
+            <Radio className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{currentRole === 'Pilot' || showCockpitHUD ? 'COCKPIT HUD [ON]' : 'PILOT HUD'}</span>
+          </button>
+
           {/* Refresh */}
           <button
             onClick={() => loadCOP(simTime)}
@@ -187,6 +204,16 @@ export const TacticalCOP: React.FC<TacticalCOPProps> = ({ isDaylightMode = false
           <SensorFusionHub
             fusionData={fusionData}
             onRefresh={loadFusionData}
+            isDaylightMode={isDaylightMode}
+          />
+        </div>
+      )}
+
+      {/* Cockpit Link-16 Datalink HUD (Visible for Flight Lead or when toggled) */}
+      {(currentRole === 'Pilot' || showCockpitHUD) && (
+        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+          <CockpitDatalinkHUD
+            onOpenATOBrief={() => handleOpenATO('REQ-2026-002')}
             isDaylightMode={isDaylightMode}
           />
         </div>

@@ -168,10 +168,29 @@ export const PlanningWorkspace: React.FC<PlanningWorkspaceProps> = ({
                     </span>
                     <span className="text-cyan-300 font-bold">{req.payload_weight_kg.toLocaleString()}kg / {req.distance_km}km</span>
                   </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-navy-900">
+                    <span className="text-slate-400">Demanded Type:</span>
+                    <span className="text-white font-bold">{req.required_resource_type.replace(/_/g, ' ')}</span>
+                  </div>
                 </div>
 
+                {/* Capability & Store Requirements */}
+                {req.required_capabilities && req.required_capabilities.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2.5">
+                    {req.required_capabilities.map((cap) => (
+                      <span
+                        key={cap}
+                        className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800"
+                      >
+                        {cap}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {isInfeasible && (
-                  <div className="mt-2 text-[10px] text-rose-400 bg-rose-950/60 p-1.5 rounded border border-rose-800 flex items-center gap-1">
+                  <div className="mt-2 text-[10px] text-rose-400 bg-rose-950/60 p-1.5 rounded border border-rose-800 flex items-center gap-1 font-mono">
                     <AlertTriangle className="w-3 h-3 text-rose-400 shrink-0" />
                     <span>Payload exceeds all available fleet limits (Engine test)</span>
                   </div>

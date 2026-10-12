@@ -76,7 +76,7 @@ export const api = {
 
   resetDemo: () => fetchJson<{ message: string }>('/reset', { method: 'POST' }),
 
-  // Tactical Operations & Dynamic Retasking (SIH26250)
+  // Tactical Operations & Dynamic Retasking
   getTacticalCOP: (simTime: number = 0.0) =>
     fetchJson<import('../types').TacticalCOPResponse>(`/tactical/cop?sim_time=${simTime}`),
 
@@ -102,5 +102,44 @@ export const api = {
 
   getMissionATO: (missionId: string) =>
     fetchJson<import('../types').ATOBriefingResponse>(`/tactical/ato/${encodeURIComponent(missionId)}`),
+
+  // Predictive Analytics & Reliability
+  getPredictiveFleetReadiness: () =>
+    fetchJson<import('../types').FleetPredictiveSummary>('/predictive/fleet-readiness'),
+
+  getMissionSurvivability: (params?: { aircraft_type?: string; countermeasures?: boolean; stealth?: boolean }) => {
+    const q = new URLSearchParams();
+    if (params?.aircraft_type) q.append('aircraft_type', params.aircraft_type);
+    if (params?.countermeasures !== undefined) q.append('countermeasures', String(params.countermeasures));
+    if (params?.stealth !== undefined) q.append('stealth', String(params.stealth));
+    return fetchJson<import('../types').PredictiveSurvivabilityResponse>(`/predictive/survivability?${q.toString()}`);
+  },
+
+  getFuelProfile: (params?: { initial_fuel?: number; distance_km?: number; speed_kts?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.initial_fuel !== undefined) q.append('initial_fuel', String(params.initial_fuel));
+    if (params?.distance_km !== undefined) q.append('distance_km', String(params.distance_km));
+    if (params?.speed_kts !== undefined) q.append('speed_kts', String(params.speed_kts));
+    return fetchJson<import('../types').PredictiveFuelResponse>(`/predictive/fuel-profile?${q.toString()}`);
+  },
+
+  getWeatherHorizon: (region: string = 'Sector-Alpha Airbase', horizon: number = 6) =>
+    fetchJson<import('../types').PredictiveWeatherHorizonResponse>(
+      `/predictive/weather-horizon?region=${encodeURIComponent(region)}&horizon_hours=${horizon}`
+    ),
+
+  runWhatIfSimulation: (payload: {
+    aircraft_type: string;
+    distance_km: number;
+    initial_fuel_pct: number;
+    countermeasures: boolean;
+    stealth: boolean;
+    environment_stress: string;
+  }) =>
+    fetchJson<import('../types').WhatIfSimResponse>('/predictive/what-if-simulation', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
+
 

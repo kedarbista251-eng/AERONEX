@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import type { Recommendation, PlanningScenario } from '../types';
+import type { Recommendation, PlanningScenario, MilitaryRole } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { RecommendationModal } from '../components/RecommendationModal';
 import { api } from '../services/api';
-import { Layers, ChevronRight, UserCheck } from 'lucide-react';
-
+import { Layers, ChevronRight, UserCheck, Shield } from 'lucide-react';
+import { MILITARY_PERSONAS } from '../services/militaryPersonas';
 
 interface RecommendationReviewProps {
-  currentRole: 'Planner' | 'Reviewer';
+  currentRole: MilitaryRole;
   onRefresh: () => void;
 }
 
@@ -56,14 +56,16 @@ export const RecommendationReview: React.FC<RecommendationReviewProps> = ({
     }
   };
 
+  const activePersona = MILITARY_PERSONAS[currentRole] || MILITARY_PERSONAS.Commander;
+
   const handleReviewDecision = async (
     recId: string,
     decision: 'APPROVED' | 'REJECTED',
     comments: string
   ) => {
     await api.reviewRecommendation(recId, {
-      reviewer_role: currentRole === 'Reviewer' ? 'Commander (Reviewer)' : 'Mission Planner',
-      reviewer_name: currentRole === 'Reviewer' ? 'Commander Vance' : 'Planner Alpha',
+      reviewer_role: `${activePersona.roleTitle} (${activePersona.rank})`,
+      reviewer_name: activePersona.name,
       decision,
       comments,
     });
@@ -87,10 +89,13 @@ export const RecommendationReview: React.FC<RecommendationReviewProps> = ({
         </div>
 
         {/* Current Active Role Badge */}
-        <div className="flex items-center gap-2 bg-navy-950 border border-navy-700 px-3.5 py-2 rounded-xl text-xs">
-          <UserCheck className="w-4 h-4 text-cyan-400" />
-          <span className="text-slate-400">Active Decision Role:</span>
-          <span className="font-bold text-cyan-300 uppercase">{currentRole}</span>
+        <div className="flex items-center gap-2 bg-navy-950 border border-cyan-800/80 px-3.5 py-2 rounded-xl text-xs">
+          <Shield className="w-4 h-4 text-cyan-400" />
+          <span className="text-slate-400">Decision Persona:</span>
+          <span className="font-bold text-cyan-300 uppercase">{activePersona.rank} {activePersona.name}</span>
+          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+            {activePersona.authorityLevel.includes('Sole') ? 'VETO AUTHORITY' : 'PLANNER REVIEW'}
+          </span>
         </div>
       </div>
 

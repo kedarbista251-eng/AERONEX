@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, PlaneTakeoff, CalendarRange, CheckCircle2,
-  AlertTriangle, History, ShieldAlert, Compass
+  AlertTriangle, History, ShieldAlert, Compass, TrendingUp
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,8 +20,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ alertCount, pendingReviewCount
       badge: 'LIVE',
       badgeColor: 'bg-rose-500 text-white animate-pulse',
     },
+    {
+      to: '/predictive',
+      label: 'Predictive Analytics',
+      icon: TrendingUp,
+      badge: 'AI',
+      badgeColor: 'bg-emerald-500 text-slate-950 font-bold',
+    },
     { to: '/', label: 'Overview', icon: LayoutDashboard },
     { to: '/resources', label: 'Resource Readiness', icon: PlaneTakeoff },
+
     { to: '/planning', label: 'Planning Workspace', icon: CalendarRange },
     {
       to: '/recommendations',

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Activity, CheckCircle, AlertTriangle, ShieldCheck, Database,
-  Radio, CloudRain, Cpu, Crosshair, RefreshCw
+  CloudRain, Cpu, Crosshair, RefreshCw, Plane, Users, Compass, Layers
 } from 'lucide-react';
 import type { FusionResponse } from '../types';
 
@@ -25,12 +25,16 @@ export const SensorFusionHub: React.FC<SensorFusionHubProps> = ({
   }
 
   const getStreamIcon = (id: string) => {
-    if (id.includes('RADAR')) return Radio;
+    if (id.includes('AVAIL')) return Plane;
+    if (id.includes('CREW')) return Users;
+    if (id.includes('WEAPONS') || id.includes('ARMORY')) return Database;
+    if (id.includes('AIRSPACE')) return Compass;
     if (id.includes('MET')) return CloudRain;
-    if (id.includes('EW')) return Crosshair;
-    if (id.includes('ARMORY')) return Database;
+    if (id.includes('THREATS') || id.includes('EW')) return Crosshair;
+    if (id.includes('PRIORITY')) return Layers;
     return Cpu;
   };
+
 
   return (
     <div className={`p-6 rounded-2xl border shadow-xl transition-all ${

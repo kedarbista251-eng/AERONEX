@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import type { Recommendation } from '../types';
+import type { Recommendation, MilitaryRole } from '../types';
 import { X, CheckCircle, XCircle, ShieldCheck, FileText, AlertCircle } from 'lucide-react';
 
 import { StatusBadge } from './StatusBadge';
 
 interface RecommendationModalProps {
   recommendation: Recommendation | null;
-  currentRole: 'Planner' | 'Reviewer';
+  currentRole: MilitaryRole;
   onClose: () => void;
   onReview: (recId: string, decision: 'APPROVED' | 'REJECTED', comments: string) => Promise<void>;
 }
